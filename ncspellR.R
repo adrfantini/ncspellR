@@ -221,7 +221,16 @@ if (nthreads > 1 ) stopCluster(cluster)
 names(spell_res) = var_out
 flog.info("Ended computation")
 
+# For some reason it is necessary to permutate the output. Further checks are necessary to verify this is the correct permutation # TODO
+shift_vec = function(v) {
+    len = length(v)
+    return(c(v[2:len], v[1]))
+}
+spell_res = aperm(spell_res, shift_vec(1:length(dim(spell_res))))
+
 #============= WRITE OUTPUT DATA =============
+
+# Better output writing # TODO
 
 flog.info('Writing to file %s', fn_out)
 spell_res %>%
