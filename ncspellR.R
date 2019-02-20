@@ -217,7 +217,7 @@ spell_res = st_apply(nc_in,
     spi_spell, CLUSTER = cluster, PROGRESS = TRUE,
     yrs = years, eventstart = estart, eventend = eend
 )
-stopCluster(cluster)
+if (nthreads > 1 ) stopCluster(cluster)
 names(spell_res) = var_out
 flog.info("Ended computation")
 
