@@ -20,6 +20,10 @@ required_pkgs = c(
     'lubridate',
     'raster'
 )
+version_pkgs = c( # Set requirements for package versions
+    stars = '0.3.0',
+    sf = '0.7.3'
+)
 
 #============= INITIALIZATION =============
 
@@ -145,6 +149,10 @@ flog.debug("Event end threshold: %g", eend)
 
 flog.info("Loading packages")
 suppressPackageStartupMessages(p_load(required_pkgs, character.only = TRUE))
+version_pkgs %>% names %>% sapply(function(x) {
+    ver = p_ver(x)
+    if ( ver < version_pkgs[x] ) flog.fatal('Version %s of package %s required, got %s. Maybe your (probably CRAN) version is behind the github one?', version_pkgs[x], x, as.character(ver))
+}) %>% invisible
 flog.debug("Loaded packages")
 
 #============= READ INPUT DATA =============
