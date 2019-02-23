@@ -4,7 +4,7 @@ program_name = 'ncspellR.R'
 description = 'Script to calculate the yearly spell count for an index from a monthly netCDF file.
 The output will contain the number of events for each year in the input.
 A spell event starts when two consecutive timesteps go under a given threshold, and stops when another higher threshold is surpassed.
-The year of any given event is marked as when the event started, not where it ended.'
+The year of any given event is marked as when the event started, not when it ended.'
 further_description = 'Input file MUST be monthly. Does everything in memory, so make sure your dataset fits in memory! \nVery few checks are performed, so also make sure you know what you are doing.\n Input files must follow the CF Conventions >= 1.5 (http://cfconventions.org/).'
 author = 'Adriano Fantini'
 version = '0.1'
@@ -47,6 +47,7 @@ suppressPackageStartupMessages(p_load(optparse))
 suppressPackageStartupMessages(p_load(glue))
 suppressPackageStartupMessages(p_load(futile.logger))
 flog.fatal = function(...) {futile.logger::flog.fatal(...); fatalerror()}
+options(error = function() { flog.fatal(geterrmessage()) ; quit(runLast=FALSE)}) # Override R's default error handling
 
 option_list = list( make_option(c("-n", "--nthreads"),
                                 type="integer",
