@@ -259,7 +259,12 @@ spi_spell = function(v, yrs, eventstart = -1, eventend = 0) {
     stopifnot( length(v) == length(yrs) )
     # Define what the labels mean, for clarity
     A = 1; B = 2; C = 3
-    # Categorize input values: lower than eventstart (A), higher than eventend (C) and in-between (B)
+    # Categorize input values:
+    # (A) lower than eventstart, start an event
+    # (B) higher than eventend, stop an event if 2 consecutives are found
+    # (B) in-between, event status not affected
+    # We treat any NA as Bs
+    v[is.na(v)] <- (eventstart + eventend) / 2
     values = as.numeric(cut(v, c(-Inf, eventstart, eventend, Inf), labels = c(A, B, C)))
     # Split values and years into separate groups, divided by a C
     idx <- 1 + cumsum( values == C )
