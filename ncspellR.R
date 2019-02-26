@@ -80,7 +80,10 @@ option_list = list( make_option(c("-n", "--nthreads"),
                                 help="Activate netCDF compression (with deflate level 1) for the main variable"),
                     make_option("--debug",
                                 action="store_true",
-                                help="Print additional debug output. This flag is also useful if you want to check that the options were correctly understood")
+                                help="Print additional debug output. This flag is also useful if you want to check that the options were correctly understood"),
+                    make_option("--dryrun",
+                                action="store_true",
+                                help="Perform a dry run, do not compute nor write anything to file")
                     )
 parser = OptionParser(
     usage = "%prog [options] INPUT OUTPUT",
@@ -122,6 +125,8 @@ if (!is.null(logfile)) {
     invisible(flog.appender(appender.tee(logfile)))
     if (file.exists(logfile)) flog.debug('Appending output to logfile %s', logfile)
 }
+
+dryrun = isTRUE(opt$dryrun)
 
 flog.info(glue(' ### Starting {program_name} version {version} from {author} ({contact}) ### '))
 
@@ -187,6 +192,8 @@ time_units = nc_in %>% ncatt_get(time_var, 'units')
 if (!time_units$hasatt) flog.fatal('Cannot find time units!')
 flog.debug('Time units: %s', time_units$value)
 time_units = strsplit(time_units$value, " ")[[1]]
+flog.debug('Time unit parsed as:',  data.frame(WHAT = c('unit', 'since', 'date', 'time', 'timezone'), VALUE = c(time_units, rep(NA, 5 - length(time_units)))), capture=TRUE)
+
 time_cal = nc_in %>% ncatt_get(time_var, 'calendar')
 if (!time_cal$hasatt) {
     flog.info('No input calendar, assuming standard')
@@ -254,6 +261,11 @@ flog.info("Reading data")
 spi_in = nc_in %>% ncvar_get(var_in)
 
 #============= COMPUTE =============
+
+if (dryrun) {
+    flog.info('Quitting, this was just a dry run')
+    quit()
+}
 
 spi_spell = function(v, yrs, eventstart = -1, eventend = 0) {
     stopifnot( length(v) == length(yrs) )
