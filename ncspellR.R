@@ -7,7 +7,7 @@ A spell event starts when two consecutive timesteps go under a given threshold, 
 The year of any given event is marked as when the event started, not when it ended.'
 further_description = 'Input file MUST be monthly. Does everything in memory, so make sure your dataset fits in memory! \nVery few checks are performed, so also make sure you know what you are doing.\n Input files must follow the CF Conventions >= 1.5 (http://cfconventions.org/).\n This program is parallel by default, but is not capable of crossing node boundaries (cannot currently run on multiple nodes).'
 author = 'Adriano Fantini'
-version = '0.2.0'
+version = '0.2.1'
 contact = 'afantini@ictp.it'
 gh_url = 'https://github.com/adrfantini/ncspellR'
 required_pkgs = c(
@@ -75,6 +75,9 @@ option_list = list( make_option(c("-n", "--nthreads"),
                     make_option("--progress",
                                 action="store_true",
                                 help="Show a progress bar - this slightly decreases performance"),
+                    make_option("--assume_monthly",
+                                action="store_true",
+                                help="Assume the input file has the correct monthly periodicity, and only use the time of the first timestep to define times"),
                     make_option("--compress",
                                 action="store_true",
                                 help="Activate netCDF compression (with deflate level 1) for the main variable"),
@@ -135,6 +138,11 @@ if (progress) {
     flog.debug('Progress bar will be shown')
 } else {
     flog.debug('Progress bar will not be shown')
+}
+
+assume_mon = isTRUE(opt$assume_monthly)
+if (assume_mon) {
+    flog.debug('Assuming the input file has the correct monthly periodicity, and only using the time of the first timestep to define times')
 }
 
 compress = isTRUE(opt$compress)
@@ -235,6 +243,11 @@ if (time_cal %in% pcict_calendars) {
 
 # Simplify dates, since we only care about months
 times = suppressWarnings(times %>% as.POSIXct %>% round('day'))
+if (assume_mon) {
+    flog.debug('Assuming monthly data, since --assume_monthly was set')
+    expected_times = times[1] + months(1:length(times)-1)
+    times = expected_times
+}
 years = year(times)
 r_years = years %>% rle
 lr_years = r_years$lengths %>% length
