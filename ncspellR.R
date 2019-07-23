@@ -196,10 +196,18 @@ nc_in = nc_open(fn_in)
 # Read time
 time_var = 'time'
 times = nc_in %>% ncvar_get(time_var)
-time_units = nc_in %>% ncatt_get(time_var, 'units')
-if (!time_units$hasatt) flog.fatal('Cannot find time units!')
+time_units_nc = nc_in %>% ncatt_get(time_var, 'units')
+if (!time_units_nc$hasatt) flog.fatal('Cannot find time units!')
 flog.debug('Time units: %s', time_units$value)
-time_units = strsplit(time_units$value, " ")[[1]]
+time_units = strsplit1(time_units_nc$value, " ")
+if ( tolower(time_units[2]) != 'since' ) flog.fatal('Cannot understand time units (%s)', time_units_nc)
+if ( any(grepl('[TZ]', time_units[3:4])) ) {
+    flog.warn('Found T or Z in time units (%s), trying manual parsing', time_units_nc)
+    time_units_tmp = as_datetime(time_units[-c(1:2)])
+    time_units[3] = time_units_tmp %>% format('%Y-%m-%d')
+    time_units[4] = time_units_tmp %>% format('%H:%M:%S')
+    time_units[5] = time_units_tmp %>% tz
+}
 flog.debug('Time unit parsed as:',  data.frame(WHAT = c('unit', 'since', 'date', 'time', 'timezone'), VALUE = c(time_units, rep(NA, 5 - length(time_units)))), capture=TRUE)
 
 time_cal = nc_in %>% ncatt_get(time_var, 'calendar')
