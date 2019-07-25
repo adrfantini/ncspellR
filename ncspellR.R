@@ -81,7 +81,8 @@ option_list = list( make_option(c("-n", "--nthreads"),
                                 help="Show a progress bar - this slightly decreases performance"),
                     make_option("--assume_monthly",
                                 action="store_true",
-                                help="Assume the input file has the correct monthly periodicity, and only use the time of the first timestep to define times"),
+                                help="Assume the input file has the correct monthly periodicity, and only use the time of the first timestep to define times.
+                This is especially useful with files that have 'months' as their time unit, because it is not well-defined nor CF compliant"),
                     make_option("--compress",
                                 action="store_true",
                                 help="Activate netCDF compression (with deflate level 1) for the main variable"),
@@ -199,7 +200,7 @@ nc_in = nc_open(fn_in)
 
 # Read time
 time_var = 'time'
-times = nc_in %>% ncvar_get(time_var)
+times_nc = nc_in %>% ncvar_get(time_var)
 time_units_nc = nc_in %>% ncatt_get(time_var, 'units')
 if (!time_units_nc$hasatt) flog.fatal('Cannot find time units!')
 flog.debug('Time units: %s', time_units_nc$value)
@@ -255,9 +256,9 @@ if (time_cal %in% pcict_calendars) {
             'noleap' = (365/12) * 24 * 3600,
             '360' = 30 * 24 * 3600,
             '360_day' = 30 * 24 * 3600
-        ) * floor(times)
+        ) * floor(times_nc)
     } else {
-        second_offsets = as.numeric(time_f(floor(times))) # TODO this floor here is a hack, to work around files which have non-integer times. Works in most cases.
+        second_offsets = as.numeric(time_f(floor(times_nc))) # TODO this floor here is a hack, to work around files which have non-integer times. Works in most cases.
     }
     times = as.PCICt(time_start, cal=time_cal) + second_offsets
 } else {
